@@ -17,7 +17,13 @@ import simd
 
 class Ray: CustomStringConvertible {
     
+    /**
+     * The origin coordinate of the ray.
+     */
     internal let origin: vector_float3
+    /**
+     * A normalized vector for the ray's direction.
+     */
     internal let direction: vector_float3
     
     internal var description: String {
@@ -32,8 +38,9 @@ class Ray: CustomStringConvertible {
     }
     
     func pointAtParameter(t: Float) -> vector_float3 {
-        //FIXME: Not yet implemented!
-        return vector_float3()
+        
+        return origin + t * direction
+    
     }
     
 }

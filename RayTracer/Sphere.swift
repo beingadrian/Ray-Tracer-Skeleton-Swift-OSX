@@ -34,9 +34,33 @@ class Sphere: ObjectType, CustomStringConvertible {
     }
     
     func intersect(ray r: Ray, tMin: Float, hit h: Hit) -> Bool {
-        //FIXME: Not yet implemented!
         
-        return false
+        // TODO: Fix intersect return false for negative 't' values
+        
+        let originTranslation = r.origin - center
+        
+        let a = length(r.direction) ** 2
+        let b = dot(2 * r.direction, originTranslation)
+        let c = dot(originTranslation, originTranslation) - (radius ** 2)
+        
+        let dSquared = (b ** 2) - (4 * a * c)
+        guard dSquared > 0 else { return false }
+        let d = sqrt(dSquared)
+        
+        let t0 = (-b + d) / 2 * a
+        let t1 = (-b - d) / 2 * a
+        
+        if (t0 < t1 && t0 > tMin && t0 < h.t) {
+            let normal = normalize(r.pointAtParameter(t0) - center)
+            h.set(t: t0, material: material, normal: normal)
+        }
+        if (t1 > tMin && t1 < h.t) {
+            let normal = normalize(r.pointAtParameter(t1) - center)
+            h.set(t: t1, material: material, normal: normal)
+        }
+
+        return true
+
     }
     
 }

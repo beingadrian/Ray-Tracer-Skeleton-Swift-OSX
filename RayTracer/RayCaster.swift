@@ -61,7 +61,22 @@ class RayCaster: Renderer {
     func render(saveImage saveImage: Bool, saveDepth: Bool, saveNormal: Bool) {
         windowController.updateStatusLabel("Ray casting", scene: sceneFile)
         
-        //FIXME: Not yet implemented!
+        // iterate width height
+        
+        for i in 0..<width {
+            if i % 10 == 0 {
+                windowController.updateStatusLabel("Ray casting column \(i) of \(width) for", scene: sceneFile)
+            }
+            for j in 0..<height {
+                raycastPixel(i, j)
+            }
+        }
+        
+        windowController.updateStatusLabel("Processing depth pixels for", scene: sceneFile)
+        
+        processDepth(saveImage: saveDepth)
+        processNormals(saveImage: saveNormal)
+        displayResult(saveImage: saveImage)
         
         // release images and scene to free up memory -- will need to be
         // recreated if rendedered again!
@@ -72,12 +87,40 @@ class RayCaster: Renderer {
     }
     
     func raycastPixel(i: Int, _ j: Int) {
-        //FIXME: Not yet implemented!
+
+        let x = (Float(i) - Float(width)/2) / (Float(width/2) + (1/Float(width)))
+        let y = (-Float(j) + Float(height)/2) / (Float(height/2) + (1/Float(height)))
+
+        let ray = scene.camera.generateRay(point: vector_float2(x, y))
+        
+        let hit = Hit()
+        
+        if scene.group.intersect(ray: ray, tMin: scene.camera.tMin, hit: hit) {
+            setDepthPixel(x: i, y: j, hit: hit)
+            setNormalPixel(x: i, y: j, hit: hit)
+            let color = shade(ray: ray, hit: hit)
+            image.setPixel(x: i, y: j, color: color)
+        } else {
+            image.setPixel(x: i, y: j, color: scene.backgroundColor)
+        }
+        
     }
     
     func shade(ray ray: Ray, hit: Hit) -> vector_float3 {
-        //FIXME: Not yet implemented!
-        return vector_float3()
+        
+        let cosTheta = dot(ray.direction, hit.normal!) / (length(ray.direction) * length(hit.normal!))
+        let irradianceIn = scene.ambientLight * cosTheta
+        
+        var sum = irradianceIn
+        for light in scene.lights {
+            // Why does get illumination require a point when point is not being used?
+            let lightInfo = light.getIllumination(point: vector_float3())
+            let shade = hit.material!.shade(ray, hit: hit, lightInfo: lightInfo)
+            sum += shade
+        }
+        
+        // returns color
+        return sum
     }
     
     func setDepthPixel(x x: Int, y: Int, hit: Hit) {
@@ -86,7 +129,7 @@ class RayCaster: Renderer {
     }
     
     func setNormalPixel(x x: Int, y: Int, hit: Hit) {
-        self.normalsImage.setPixel(x: x, y: y, color: hit.normal!)
+        self.normalsImage.setPixel(x: x, y: y, color: abs(hit.normal!))
     }
     
     func processDepth(saveImage save: Bool) {
