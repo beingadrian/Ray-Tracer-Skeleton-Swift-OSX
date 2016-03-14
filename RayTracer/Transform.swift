@@ -26,9 +26,22 @@ class Transform: Hitable {
     }
     
     func intersect(ray r: Ray, tMin: Float, hit h: Hit) -> Bool {
-        //FIXME: Not yet implemented!
 
-        return false
+        let rayOriginOS = transformPoint(transform.inverse, p: r.origin)
+        let rayDirectionOS = transformDirection(transform.inverse, dir: r.direction)
+        let rayOS = Ray(origin: rayOriginOS, direction: rayDirectionOS)
+
+        object.intersect(ray: rayOS, tMin: tMin, hit: h)
+
+        guard let normal = h.normal else { return false }
+        let hitNormalWS = transformDirection(transform.inverse.transpose, dir: normal)
+        
+        if (h.t > tMin) {
+            h.set(t: h.t, material: h.material!, normal: hitNormalWS)
+            object.intersect(ray: rayOS, tMin: tMin, hit: h)
+        }
+
+        return true
     }
     
 }

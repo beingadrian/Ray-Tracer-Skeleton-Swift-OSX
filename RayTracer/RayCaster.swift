@@ -108,19 +108,23 @@ class RayCaster: Renderer {
     
     func shade(ray ray: Ray, hit: Hit) -> vector_float3 {
         
-        let cosTheta = dot(ray.direction, hit.normal!) / (length(ray.direction) * length(hit.normal!))
-        let irradianceIn = scene.ambientLight * cosTheta
-        
-        var sum = irradianceIn
-        for light in scene.lights {
-            // Why does get illumination require a point when point is not being used?
-            let lightInfo = light.getIllumination(point: vector_float3())
-            let shade = hit.material!.shade(ray, hit: hit, lightInfo: lightInfo)
-            sum += shade
+        guard let material = hit.material else {
+            fatalError("Hit without a material assigned!")
         }
         
-        // returns color
-        return sum
+        hit.setNormal(normalize(hit.normal!))
+        
+        var color = scene.ambientLight * material.getDiffuseColor()
+        
+        // iterate over lights, apply diffuse shading
+        let p = ray.pointAtParameter(hit.t)
+        for light in scene.lights {
+            let lightInfo = light.getIllumination(point: p)
+            color += material.shade(ray, hit: hit, lightInfo: lightInfo)
+        }
+        
+        return color
+    
     }
     
     func setDepthPixel(x x: Int, y: Int, hit: Hit) {

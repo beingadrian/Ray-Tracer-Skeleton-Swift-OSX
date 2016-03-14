@@ -35,7 +35,7 @@ class Sphere: ObjectType, CustomStringConvertible {
     
     func intersect(ray r: Ray, tMin: Float, hit h: Hit) -> Bool {
         
-        // TODO: Fix intersect return false for negative 't' values
+//         TODO: Fix intersect return false for negative 't' values
         
         let originTranslation = r.origin - center
         

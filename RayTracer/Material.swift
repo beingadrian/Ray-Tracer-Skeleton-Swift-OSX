@@ -11,7 +11,6 @@
 // http://creativecommons.org/licenses/by-nc-sa/4.0/
 //
 
-
 import Foundation
 import simd
 
@@ -24,7 +23,7 @@ class Material {
     var hasTexture: Bool {
         return texture != nil
     }
-    
+
     init(diffuseColor: vector_float3, specularColor: vector_float3, shininess: Float, textureName: String?) {
         self.diffuseColor = diffuseColor
         self.specularColor = specularColor
@@ -40,16 +39,28 @@ class Material {
     
     func shade(ray: Ray, hit: Hit, lightInfo light: (direction: vector_float3, color: vector_float3)) -> vector_float3 {
         
-        let diffuseCoefficient = diffuseColor
-        let surfaceNormal = normalize(hit.normal!)
-        let lightDirection = normalize(light.direction)
-        let lightIntensity = light.color
+        // diffuseCoefficient = diffuseColor
         
-        let shadedColor = diffuseCoefficient * max(0, dot(surfaceNormal, lightDirection)) * lightIntensity
+        guard let hitNormal = hit.normal else { return vector_float3() }
         
-        // return color
+        let influence = max(0, dot(hitNormal, light.direction))
+        
+        guard (influence > 0) else { return vector_float3() }
+        
+        var shadedColor = diffuseColor * influence * light.color
+        
+        // specular calculation here
+        
+        let reflectedLight = -light.direction + 2 * influence * hitNormal
+        let R = max(dot(-ray.direction, reflectedLight), 0) ** shininess
+        shadedColor += specularColor * R * light.color
+        
         return shadedColor
         
+    }
+    
+    func getDiffuseColor() -> vector_float3 {
+        return self.diffuseColor
     }
     
 }
